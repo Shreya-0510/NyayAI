@@ -1,3 +1,4 @@
+//C:\Users\SAKSHI\NyayAI\frontend\src\pages\Dashboard.jsx
 import React from "react";
 import { Bookmark, FileText } from "lucide-react";
 
