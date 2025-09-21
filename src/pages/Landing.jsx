@@ -14,7 +14,7 @@ const Landing = () => {
           Upload contracts, agreements, or policies — we’ll explain them in plain English.
         </p>
         <button
-          onClick={() => navigate("/signup")} // redirect to signup
+          onClick={() => navigate("/upload")} // redirect to upload page
           className="px-6 py-3 bg-[#8B5E3C] text-white font-semibold rounded-xl shadow-md hover:bg-[#734B2F] transition"
         >
           Get Started
@@ -64,21 +64,6 @@ const Landing = () => {
             <h3 className="font-semibold text-lg mb-2">3. Get Insights</h3>
             <p>Understand risks, summaries, and fairness instantly.</p>
           </div>
-        </div>
-      </section>
-
-      {/* Upload Section */}
-      <section
-        id="upload-section"
-        className="px-8 py-20 bg-[#EFE9E4] flex flex-col items-center text-center"
-      >
-        <h2 className="text-3xl font-bold mb-6">Upload Your Document</h2>
-        <div className="p-10 bg-white/80 backdrop-blur-md shadow-xl rounded-2xl w-full max-w-xl">
-          <input
-            type="file"
-            className="w-full border border-dashed border-gray-400 p-4 rounded-lg cursor-pointer"
-          />
-          <p className="mt-4 text-sm text-gray-500">Supports PDF & DOCX, up to 10 MB.</p>
         </div>
       </section>
 
