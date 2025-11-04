@@ -1,43 +1,38 @@
-import { Link } from "react-router-dom";
+import { useAuth } from "react-oidc-context";
+import LogoutButton from "../pages/LogoutButton"; // ✅ import your new logout component
 
 export default function Navbar() {
+  const auth = useAuth();
+
   return (
     <nav className="bg-[#f9f8f6] border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm">
-      {/* Logo / Brand */}
-      <Link to="/" className="text-2xl font-semibold text-[#3b2f2f]">
+      <a href="/" className="text-2xl font-semibold text-[#3b2f2f]">
         NyayAI
-      </Link>
+      </a>
 
-      {/* Nav Links */}
       <div className="space-x-6 hidden md:flex">
-        <Link to="/" className="text-gray-700 hover:text-[#5a4034]">
-          Home
-        </Link>
-        <Link to="/upload" className="text-gray-700 hover:text-[#5a4034]">
-          Upload
-        </Link>
-        <Link to="/chat/123" className="text-gray-700 hover:text-[#5a4034]">
-          Cards
-        </Link>
-        <Link to="/dashboard" className="text-gray-700 hover:text-[#5a4034]">
-          Dashboard
-        </Link>
+        <a href="/" className="text-gray-700 hover:text-[#5a4034]">Home</a>
+        <a href="/upload" className="text-gray-700 hover:text-[#5a4034]">Upload</a>
+        <a href="/dashboard" className="text-gray-700 hover:text-[#5a4034]">Dashboard</a>
       </div>
 
-      {/* Auth Buttons */}
       <div className="space-x-4">
-        <Link
-          to="/login"
-          className="px-4 py-2 text-sm bg-[#5a4034] text-white rounded-lg hover:bg-[#3b2f2f] transition"
-        >
-          Login
-        </Link>
-        <Link
-          to="/signup"
-          className="px-4 py-2 text-sm border border-[#5a4034] text-[#5a4034] rounded-lg hover:bg-[#f0e9e5] transition"
-        >
-          Sign Up
-        </Link>
+        {auth.isAuthenticated ? (
+          <>
+            <span className="text-gray-700">
+              Hi, {auth.user?.profile?.email}
+            </span>
+            {/* ✅ Replaced inline logout logic with separate component */}
+            <LogoutButton />
+          </>
+        ) : (
+          <button
+            onClick={() => auth.signinRedirect()}
+            className="px-4 py-2 text-sm bg-[#5a4034] text-white rounded-lg hover:bg-[#3b2f2f]"
+          >
+            Login
+          </button>
+        )}
       </div>
     </nav>
   );

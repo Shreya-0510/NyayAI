@@ -1,5 +1,7 @@
+// src/pages/Upload.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "react-oidc-context";
 import { pdfjsLib } from "../utils/pdf-worker";
 import LoadingAnimation from "../components/LoadingAnimation";
 import { analyzeTextWithGemini } from "../utils/gemini";
@@ -7,13 +9,24 @@ import { analyzeTextWithGemini } from "../utils/gemini";
 export default function Upload() {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
-  const navigate = useNavigate(); // ✅ navigation hook
+  const navigate = useNavigate();
+  const auth = useAuth(); // ✅ Access Cognito user info & tokens
 
   const presignApi =
     "https://zyurate5j2.execute-api.us-east-1.amazonaws.com/default/GenerateUploadUrl";
   const bucketName = import.meta.env.VITE_AWS_BUCKET_NAME || "nyayai-docs";
 
   const handleFileChange = (e) => setFile(e.target.files[0]);
+
+  // ✅ Check authentication before allowing upload
+  const ensureAuthenticated = () => {
+    if (!auth?.isAuthenticated) {
+      alert("Please log in first to upload documents.");
+      auth.signinRedirect(); // redirect to Cognito login
+      return false;
+    }
+    return true;
+  };
 
   const extractTextFromPDF = async (pdfFile) => {
     try {
@@ -36,19 +49,30 @@ export default function Upload() {
 
   const handleUpload = async () => {
     if (!file) return alert("Select a file first!");
+    if (!ensureAuthenticated()) return; // ✅ stop if not logged in
     setLoading(true);
 
     try {
+      // ✅ Get Cognito ID token
+      const idToken = auth.user?.id_token;
+      if (!idToken) throw new Error("Missing authentication token.");
+
       const fileKey = `${Date.now()}-${file.name}`;
+
+      // ✅ Call presign API with Authorization header
       const presignRes = await fetch(presignApi, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({ fileName: fileKey, fileType: file.type }),
       });
 
       if (!presignRes.ok) throw new Error("Failed to get upload URL");
       const { uploadUrl } = await presignRes.json();
 
+      // ✅ Upload file to S3 using the presigned URL
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -58,6 +82,7 @@ export default function Upload() {
 
       console.log("✅ Uploaded to S3:", fileKey);
 
+      // ✅ Extract text from file
       let text = "";
       if (file.type === "application/pdf") {
         text = await extractTextFromPDF(file);
@@ -71,12 +96,12 @@ export default function Upload() {
 
       if (!text.trim()) throw new Error("No readable text found in file.");
 
-      // ✅ Step 4 → Analyze with Gemini
+      // ✅ Analyze text with Gemini
       const geminiClauses = await analyzeTextWithGemini(text);
 
       console.log("✅ Gemini analysis complete:", geminiClauses);
 
-      // ✅ Step 5 → Navigate to Chat page with clauses
+      // ✅ Navigate to Chat page
       navigate("/chat", { state: { clauses: geminiClauses } });
     } catch (err) {
       console.error("❌ Error:", err);
